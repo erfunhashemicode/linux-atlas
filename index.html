@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0e0b;
+    --panel:#0f1512;
+    --panel-2:#121a15;
+    --line:#1e3527;
+    --line-soft:#152720;
+    --phosphor:#4ade80;
+    --phosphor-bright:#8bffb0;
+    --amber:#ffb454;
+    --text:#d8e6dc;
+    --text-dim:#8aa392;
+    --text-dimmer:#54695e;
+    --red:#ff5f57;
+    --yellow:#ffbd2e;
+    --green:#28c93f;
+    --maxw:1400px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Mono', monospace;
+    background:
+      radial-gradient(ellipse at 15% 0%, #0f1a13 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 30%, #0d1712 0%, transparent 45%),
+      var(--void);
+    color:var(--text);
+    min-height:100vh;
+  }
+
+  a{color:inherit;}
+
+  /* ---------------- top bar ---------------- */
+  header.top{
+    position:sticky; top:0; z-index:50;
+    background:linear-gradient(180deg, #101a13ee, #0d1511ee);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .chrome{
+    display:flex; align-items:center; gap:16px;
+    padding:12px 20px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .dots{display:flex; gap:8px;}
+  .dot{width:11px; height:11px; border-radius:50%;}
+  .dot.r{background:var(--red);} .dot.y{background:var(--yellow);} .dot.g{background:var(--green);}
+  .chrome-title{
+    flex:1; text-align:center; color:var(--text-dimmer);
+    font-size:12px; letter-spacing:0.06em;
+  }
+  .chrome-meta{color:var(--text-dimmer); font-size:12px; display:none;}
+  @media(min-width:640px){ .chrome-meta{display:block;} }
+
+  .topwrap{
+    max-width:var(--maxw); margin:0 auto;
+    padding:18px 20px 16px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .brand-row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .brand{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:800;
+    font-size:clamp(20px, 3.2vw, 30px);
+    color:var(--phosphor-bright);
+    text-shadow:0 0 16px rgba(74,222,128,0.3);
+    letter-spacing:-0.01em;
+  }
+  .brand .amber{color:var(--amber); -webkit-text-fill-color:var(--amber);}
+  .stats-inline{
+    display:flex; gap:16px; font-size:12px; color:var(--text-dimmer); flex-wrap:wrap;
+  }
+  .stats-inline b{color:var(--phosphor); font-weight:600;}
+
+  .search-row{
+    display:flex; gap:10px; align-items:center;
+  }
+  .search-box{
+    position:relative; flex:1;
+  }
+  .search-box .prompt-char{
+    position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    color:var(--phosphor); font-weight:700; font-size:17px; pointer-events:none;
+  }
+  #search{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:13px 44px 13px 38px;
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  #search::placeholder{color:var(--text-dimmer);}
+  #search:focus{
+    border-color:var(--phosphor);
+    box-shadow:0 0 0 3px rgba(74,222,128,0.12);
+  }
+  .clear-btn{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--text-dimmer);
+    cursor:pointer; font-size:18px; line-height:1; padding:6px;
+    display:none;
+  }
+  .clear-btn.show{display:block;}
+  .clear-btn:hover{color:var(--amber);}
+
+  .search-mode{
+    display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; flex-shrink:0;
+  }
+  .search-mode button{
+    background:var(--panel); color:var(--text-dimmer); border:none;
+    padding:12px 14px; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    cursor:pointer; white-space:nowrap; letter-spacing:0.03em;
+  }
+  .search-mode button.active{background:var(--line-soft); color:var(--phosphor);}
+  .search-mode button:not(:last-child){border-right:1px solid var(--line);}
+
+  .results-line{
+    font-size:12px; color:var(--text-dimmer); min-height:16px;
+  }
+  .results-line b{color:var(--amber); font-weight:600;}
+  .results-line .kbd{
+    display:inline-block; border:1px solid var(--line); border-radius:4px;
+    padding:0 6px; font-size:11px; color:var(--text-dim); margin-left:6px;
+  }
+
+  /* ---------------- letter nav ---------------- */
+  nav.letters{
+    display:flex; overflow-x:auto; gap:2px;
+    border-top:1px solid var(--line-soft);
+    scrollbar-width:thin;
+  }
+  nav.letters::-webkit-scrollbar{height:4px;}
+  nav.letters::-webkit-scrollbar-thumb{background:var(--line); border-radius:2px;}
+  .letter-link{
+    flex:0 0 auto;
+    padding:9px 14px;
+    font-size:13px; font-weight:700;
+    color:var(--text-dimmer);
+    text-decoration:none;
+    border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  .letter-link:hover{color:var(--phosphor);}
+  .letter-link.disabled{opacity:0.25; pointer-events:none;}
+
+  /* ---------------- hero ---------------- */
+  .hero{
+    max-width:var(--maxw); margin:0 auto;
+    padding:38px 20px 10px;
+  }
+  .hero p{
+    max-width:900px; color:var(--text-dim); font-size:15px; line-height:1.7;
+  }
+  .hero p .amber{color:var(--amber);}
+  .prompt-line{
+    font-family:'JetBrains Mono', monospace; color:var(--text-dim); font-size:14px; margin-bottom:10px;
+  }
+  .prompt-line b{color:var(--phosphor); font-weight:700;}
+
+  /* ---------------- main board ---------------- */
+  main{
+    max-width:var(--maxw); margin:0 auto;
+    padding:20px 20px 80px;
+  }
+
+  .board{
+    columns:1;
+    column-gap:32px;
+  }
+  @media(min-width:700px){ .board{columns:2;} }
+  @media(min-width:1050px){ .board{columns:3;} }
+
+  .letter-block{ break-inside:avoid-column; margin-bottom:8px; }
+  .letter-head{
+    display:flex; align-items:baseline; gap:10px;
+    break-after:avoid-column;
+    margin-top:34px; margin-bottom:10px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0;
+  }
+  .letter-head .L{
+    font-family:'JetBrains Mono', monospace; font-weight:800; font-size:24px;
+    color:var(--amber); text-shadow:0 0 10px rgba(255,180,84,0.3);
+  }
+  .letter-head .count{ font-size:11px; color:var(--text-dimmer); }
+
+  .entry{
+    break-inside:avoid;
+    padding:9px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .entry .line1{
+    font-size:14.5px; line-height:1.4; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;
+  }
+  .entry .dollar{color:var(--text-dimmer);}
+  .entry .cmd{ color:var(--phosphor); font-weight:600; }
+  .entry .desc{
+    color:var(--text-dim); font-size:13.5px; line-height:1.55; margin-top:3px; padding-left:16px;
+  }
+  .entry mark{
+    background:rgba(255,180,84,0.28); color:var(--amber); border-radius:2px; padding:0 1px;
+  }
+  .entry.hidden{ display:none; }
+
+  .letter-block.empty{ display:none; }
+
+  .no-results{
+    display:none;
+    text-align:center; padding:80px 20px; color:var(--text-dimmer);
+  }
+  .no-results.show{ display:block; }
+  .no-results .big{ font-size:40px; color:var(--text-dimmer); margin-bottom:14px; }
+  .no-results .hint{ font-size:13px; margin-top:8px; }
+  .no-results b{ color:var(--amber); }
+
+  /* ---------------- footer ---------------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:28px 20px 40px;
+  }
+  .footwrap{
+    max-width:var(--maxw); margin:0 auto;
+    display:flex; justify-content:space-between; gap:30px; flex-wrap:wrap;
+  }
+  footer .tip{ color:var(--text-dim); font-size:13px; line-height:1.7; }
+  footer .tip b{ color:var(--phosphor); }
+  footer .credit{ color:var(--text-dimmer); font-size:12px; line-height:1.7; text-align:right; }
+  .personal-branding{
+    flex-basis:100%;
+    padding-top:18px;
+    margin-top:2px;
+    border-top:1px solid var(--line-soft);
+    color:var(--text-dimmer);
+    font-size:12px;
+    line-height:1.7;
+  }
+  .personal-branding a:hover{ color:var(--phosphor-bright) !important; text-decoration:underline !important; }
+
+  ::selection{ background:rgba(74,222,128,0.3); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="chrome">
+    <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <div class="chrome-title">root@reference — bash — linux-commands.sh</div>
+    <div class="chrome-meta">/usr/share/doc</div>
+  </div>
+  <div class="topwrap">
+    <div class="brand-row">
+      <div class="brand">THE LINUX <span class="amber">COMMAND LINE</span></div>
+      <div class="stats-inline">
+        <span><b id="statTotal">0</b> commands</span>
+        <span><b>26</b> letters</span>
+        <span><b id="statShown">0</b> shown</span>
+      </div>
+    </div>
+    <div class="search-row">
+      <div class="search-box">
+        <span class="prompt-char">$</span>
+        <input id="search" type="text" placeholder="grep -i  &nbsp;search a command or what it does…" autocomplete="off" spellcheck="false">
+        <button class="clear-btn" id="clearBtn" aria-label="Clear search">×</button>
+      </div>
+      <div class="search-mode" id="searchMode">
+        <button data-mode="both" class="active">name+desc</button>
+        <button data-mode="name">name</button>
+        <button data-mode="desc">desc</button>
+      </div>
+    </div>
+    <div class="results-line" id="resultsLine"></div>
+  </div>
+  <nav class="letters" id="letterNav"></nav>
+</header>
+
+<div class="hero">
+  <div class="prompt-line"><b>user@linux</b>:~$ man --list-all-commands | sort -k1</div>
+  <p>A searchable <span class="amber">A to Z</span> reference for the Bash shell. Every command has a full one-line explanation of what it does — type in the search bar to filter by command name, by what it does, or both at once.</p>
+</div>
+
+<main>
+  <div class="board" id="board"></div>
+  <div class="no-results" id="noResults">
+    <div class="big">$ grep: no matches found</div>
+    <div>Nothing matched your search.</div>
+    <div class="hint">Try a broader term, or <b>clear the search</b> to see all commands.</div>
+  </div>
+</main>
+
+<footer>
+  <div class="footwrap">
+    <div class="tip">
+      <div><b>$</b> man &lt;command&gt;</div>
+      <div style="margin-top:4px;">Full manual pages for any entry here. Not every command ships by default — some need an extra package for your distribution.</div>
+    </div>
+    <div class="credit">
+      Condensed from standard Linux manual pages, for quick personal reference.<br>
+      Source list: Ubuntu manual · SS64 · Linux Dev Center — via Fossbytes (Aditya Tiwari).
+    </div>
+    <div class="personal-branding">
+      <div>
+        <span style="color:var(--phosphor);">$</span> maintained by
+        <strong style="color:var(--phosphor-bright);">Erfan Hashemi</strong>
+      </div>
+      <div style="margin-top:6px;">
+        <a href="https://erfanhashemi.ir/" target="_blank" rel="noopener noreferrer"
+           style="color:var(--amber); text-decoration:none;">erfanhashemi.ir</a>
+        <span style="color:var(--text-dimmer);"> · </span>
+        <a href="https://github.com/erfunhashemicode" target="_blank" rel="noopener noreferrer"
+           style="color:var(--amber); text-decoration:none;">github.com/erfunhashemicode</a>
+      </div>
+      <div style="margin-top:6px;">© 2026 Erfan Hashemi. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const DATA = {
+A:[["accept","Allows a printer or destination to accept jobs sent to its queue."],
+["access","Checks whether the current user has read, write, or execute permission on a file."],
+["aclocal","Scans configure.ac and generates an aclocal.m4 file for the GNU autoconf toolchain."],
+["aconnect","Manages connections between clients on the ALSA MIDI sequencer."],
+["acpi","Prints battery, thermal and other Advanced Configuration and Power Interface status."],
+["acpid","Listens for ACPI hardware events (like a lid close) and notifies user-space programs."],
+["addr2line","Translates a program's memory addresses into the source file and line number they came from."],
+["agetty","An alternative implementation of getty that opens a terminal line and prompts for a login."],
+["alias","Defines a shortcut name that expands to a longer command."],
+["alsactl","Saves, restores and manages advanced settings for an ALSA soundcard driver."],
+["amidi","Reads from or writes to ALSA raw MIDI ports."],
+["amixer","A command-line mixer for adjusting ALSA soundcard volume and inputs."],
+["anacron","Runs scheduled commands periodically, even catching up on jobs missed while the machine was off."],
+["aplay","Plays and records sound files from the command line."],
+["apm","Displays Advanced Power Management status on older laptop hardware."],
+["apropos","Searches the short descriptions of man pages for a keyword."],
+["apt","The Advanced Package Tool for installing and managing software on Debian-based systems."],
+["apt-get","The classic command-line front end for installing, removing and updating APT packages."],
+["aptitude","A higher-level package manager built on top of the APT system."],
+["ar","Creates, modifies, and extracts files from static archive (.a) files."],
+["arch","Prints the machine's hardware architecture, such as x86_64."],
+["arecord","Records audio from the command line using the ALSA soundcard driver."],
+["arp","Displays and edits the kernel's ARP address-resolution cache."],
+["as","The GNU portable assembler, used to turn assembly code into object files."],
+["aspell","An interactive command-line spell checker."],
+["at","Schedules a one-off command to run at a specified date and time."],
+["atd","The background daemon that actually executes jobs queued by at."],
+["atq","Lists a user's pending jobs that were scheduled with at."],
+["atrm","Cancels a job that was previously scheduled with at."],
+["aumix","A simple command-line audio mixer."],
+["autoconf","Generates a portable configure script from a template file."],
+["automake","Produces GNU-standard Makefile.in files from template Makefile.am files."],
+["awk","A pattern-scanning and text-processing language, often used to find and rewrite fields in a file."]],
+B:[["badblocks","Scans a disk partition for physically damaged sectors."],
+["banner","Prints a string of characters in giant ASCII-art letters."],
+["basename","Strips the directory path and optional suffix from a filename, leaving just the base name."],
+["bash","The GNU Bourne-Again Shell, the default command interpreter on most Linux distributions."],
+["batch","Runs queued commands when system load permits, similar to at but load-aware."],
+["bc","An arbitrary-precision calculator language for the command line."],
+["bg","Resumes a suspended job and continues running it in the background."],
+["biff","Notifies you when new mail arrives and who it's from."],
+["bind","Displays or sets Bash key bindings and readline function names."],
+["bison","A GNU parser generator that's compatible with the classic yacc tool."],
+["break","Exits immediately from an enclosing for, while, until, or select loop."],
+["builtin","Runs a shell builtin directly, bypassing any shell function of the same name."],
+["bzip2","Compresses files using a high-ratio, block-sorting algorithm."],
+["bzgrep","Runs grep on the contents of bzip2-compressed files without unpacking them first."],
+["bzcmp","Compares two bzip2-compressed files, similar to cmp."],
+["bzdiff","Shows line-by-line differences between bzip2-compressed files, similar to diff."]],
+C:[["cal","Displays a simple text calendar."],
+["cardctl","Controls PCMCIA sockets and selects a card's configuration scheme."],
+["case","A shell construct that runs different commands depending on which pattern a value matches."],
+["cat","Concatenates one or more files and prints the result to standard output."],
+["cc","Invokes the system's default C compiler."],
+["cd","Changes the shell's current working directory."],
+["cfdisk","A menu-driven, full-screen tool for viewing and editing a disk's partition table."],
+["chage","Views or changes a user's password expiration and aging settings."],
+["chattr","Changes special filesystem attributes on ext-family files, such as immutability."],
+["chfn","Changes the personal information (real name, phone, etc.) associated with a user account."],
+["chgrp","Changes the group that owns a file or directory."],
+["chkconfig","Enables or disables which runlevels a system service starts in."],
+["chmod","Changes the read, write, and execute permissions on a file or directory."],
+["chown","Changes which user (and optionally group) owns a file."],
+["chpasswd","Updates many users' passwords at once from a batch input file."],
+["chroot","Runs a command with a different directory treated as the filesystem root."],
+["chrt","Views or sets a process's real-time scheduling priority."],
+["chsh","Changes which shell program a user gets when they log in."],
+["chvt","Switches the active virtual console on the terminal."],
+["cksum","Calculates a CRC checksum and byte count for a file, to help verify integrity."],
+["clear","Clears all text from the visible terminal screen."],
+["cmp","Compares two files byte by byte and reports the first difference found."],
+["col","Filters out reverse and half-reverse line feeds from formatted text output."],
+["column","Reformats plain-text input into neatly aligned columns."],
+["comm","Compares two sorted files line by line and reports lines unique to each, or common to both."],
+["compress","Compresses a file using the older Lempel-Ziv (.Z) format."],
+["continue","Skips the rest of the current loop iteration and moves on to the next one."],
+["cp","Copies files or directories from one location to another."],
+["cpio","Copies files into or out of an archive, reading filenames from standard input."],
+["cpp","The GNU C preprocessor, which expands macros and includes before compilation."],
+["cron","The background daemon that runs scheduled jobs listed in crontab files."],
+["crontab","Creates, edits, or lists a user's schedule of recurring cron jobs."],
+["csplit","Splits a file into pieces wherever a given context pattern occurs."],
+["ctags","Scans source code and builds an index of function and variable definitions for editors."],
+["cupsd","The scheduler daemon for the CUPS printing system."],
+["curl","Transfers data to or from a server using HTTP, FTP and many other protocols."],
+["cut","Extracts specific columns or character ranges from each line of a file."],
+["cvs","The Concurrent Versions System, an older tool for tracking file revisions across multiple users."]],
+D:[["date","Displays or sets the system's current date and time."],
+["dc","A stack-based ('reverse Polish') desk calculator utility."],
+["dd","Copies and converts raw data block-by-block; commonly used to clone disks or write boot images."],
+["ddrescue","Attempts to recover readable data from a failing or partially damaged disk."],
+["deallocvt","Frees kernel memory that was reserved for virtual consoles no longer in use."],
+["debugfs","An interactive debugger for inspecting and repairing ext2/ext3/ext4 filesystems at a low level."],
+["declare","Declares a shell variable and optionally sets attributes like integer or read-only."],
+["depmod","Rebuilds the dependency map that tells the kernel which modules require which other modules."],
+["df","Reports how much disk space is used and free on mounted filesystems."],
+["diff","Compares two files and shows the lines that differ between them."],
+["diff3","Compares three files at once and reports the differences among them."],
+["dig","Queries DNS servers and displays detailed lookup results."],
+["dir","Lists the contents of a directory, similar to ls."],
+["dircolors","Generates the color settings used by ls to distinguish file types."],
+["dirname","Prints the directory portion of a path, discarding the final filename."],
+["dirs","Displays the stack of directories remembered by pushd and popd."],
+["disable","Stops a CUPS printer from accepting further print jobs."],
+["dmesg","Prints messages from the kernel's ring buffer, useful for diagnosing hardware and boot issues."],
+["dnsdomainname","Shows the DNS domain portion of the system's hostname."],
+["dnssec-keygen","Generates a cryptographic key pair used to sign a DNS zone."],
+["du","Summarizes how much disk space each file or directory is using."],
+["dump","Backs up an entire ext2/ext3 filesystem to tape or another file."],
+["dumpe2fs","Prints detailed internal information about an ext2/ext3/ext4 filesystem."],
+["dumpkeys","Shows the kernel's current keyboard translation tables."]],
+E:[["e2fsck","Checks an ext2/ext3/ext4 filesystem for errors and repairs them if needed."],
+["e2image","Saves the critical metadata of an ext filesystem to a file, for backup or analysis."],
+["e2label","Displays or changes the volume label on an ext2/ext3/ext4 filesystem."],
+["echo","Writes its arguments to standard output, most often used to print text or variables."],
+["ed","A minimal, line-oriented text editor, one of the oldest Unix editors."],
+["edquota","Opens a text editor to manually adjust a user's or group's disk quotas."],
+["egrep","Searches text using extended regular expressions; equivalent to grep -E."],
+["eject","Ejects removable media such as a CD tray or USB drive."],
+["elvtune","Tunes the latency parameters of the disk I/O elevator scheduling algorithm."],
+["emacs","A highly extensible text editor and computing environment."],
+["enable","Turns shell builtin commands on or off."],
+["env","Runs a command in a modified environment, or prints the current environment variables."],
+["envsubst","Substitutes the values of environment variables into a template string."],
+["esd","The Enlightenment Sound Daemon, letting multiple applications share one audio device."],
+["etags","Builds a tag index of functions and macros for use with the Emacs editor."],
+["ethtool","Queries and configures Ethernet network interface driver settings."],
+["eval","Builds a command from its arguments and then executes the result."],
+["ex","An interactive line-based text editor and the underlying engine of vi."],
+["exec","Replaces the current shell process with the specified command, without forking a new one."],
+["exit","Terminates the current shell or script, optionally with a specific exit status."],
+["expand","Converts tab characters in a file into an equivalent number of spaces."],
+["expect","Automates interaction with programs that expect keyboard input, based on their output."],
+["export","Marks a shell variable so that it is passed to child processes."],
+["expr","Evaluates a simple arithmetic or string expression and prints the result."]],
+F:[["factor","Prints the prime factors of one or more numbers."],
+["false","Does nothing and always exits with a non-zero (failure) status."],
+["fc-cache","Rebuilds the font information cache used by the fontconfig library."],
+["fc-list","Lists the fonts currently available to the system."],
+["fdformat","Performs a low-level format on a floppy disk."],
+["fdisk","An interactive tool for viewing and editing a disk's partition table."],
+["fetchmail","Retrieves mail from a remote server and delivers it to the local mail system."],
+["fg","Brings a background or suspended job into the foreground."],
+["fgconsole","Prints the number of the currently active virtual console."],
+["fgrep","Searches for one or more fixed strings rather than a regular expression; equivalent to grep -F."],
+["file","Examines a file's contents and reports what type of file it is."],
+["find","Searches a directory tree for files matching name, type, size, date or other criteria."],
+["finger","Displays information about a user, including data from their .plan file."],
+["flex","Generates a lexical scanner program from a set of pattern rules."],
+["fmt","Reformats a text file to fit a given line width."],
+["fold","Wraps each long line of input to fit within a specified width."],
+["for","Loops over a list of items, running a block of commands for each one."],
+["formail","Filters and splits mail messages from standard input into mailbox format."],
+["format","Formats a disk for use, preparing it with a filesystem."],
+["free","Displays how much physical and swap memory is free, used, and cached."],
+["fsck","Checks a filesystem for consistency errors and repairs them."],
+["ftp","A text-based client for transferring files using the File Transfer Protocol."],
+["function","Defines a reusable shell function."],
+["fuser","Identifies which processes are currently using a given file or mounted filesystem."]],
+G:[["g++","Invokes the GNU C++ compiler."],
+["gawk","GNU's implementation of the AWK pattern-scanning and text-processing language."],
+["gcc","The GNU compiler for C and C++ source code."],
+["gdb","An interactive debugger for stepping through a program and inspecting where it fails."],
+["getent","Looks up entries (like users or hosts) from the system's configured Name Service Switch sources."],
+["getkeycodes","Displays the kernel's table mapping scancodes to keycodes."],
+["getopts","Parses positional command-line options inside a shell script."],
+["gpasswd","Lets an administrator add or remove members and set passwords for a user group."],
+["gpg","Encrypts, decrypts, and digitally signs data using the OpenPGP standard."],
+["gpm","Provides mouse cut-and-paste support in the plain text Linux console."],
+["gprof","Displays profiling data showing which functions a program spent time in."],
+["grep","Searches one or more files for lines matching a pattern and prints them."],
+["groff","The front end for the GNU troff document-formatting system, used to typeset man pages."],
+["groupadd","Creates a new user group."],
+["groupdel","Deletes an existing user group."],
+["groupmod","Changes the name or ID of an existing group."],
+["groups","Lists the groups that a given user belongs to."],
+["grpck","Checks the internal consistency of the group and gshadow files."],
+["gs","Ghostscript, an interpreter for the PostScript and PDF page description languages."],
+["gunzip","Decompresses files that were compressed with gzip."],
+["gzip","Compresses files using the DEFLATE algorithm, producing .gz files."]],
+H:[["halt","Stops the operating system, halting the CPU without necessarily powering off."],
+["hash","Shows or clears the shell's remembered locations of previously run commands."],
+["hdparm","Views or tunes low-level hardware parameters of SATA/IDE disk drives."],
+["head","Prints the first lines (10 by default) of one or more files."],
+["help","Displays built-in help text for a shell builtin command."],
+["hexdump","Displays a file's contents in hexadecimal, octal, decimal, or ASCII form."],
+["history","Lists the commands previously entered in the current shell session."],
+["host","Performs a simple DNS lookup for a hostname or IP address."],
+["hostid","Prints the system's unique numeric host identifier in hexadecimal."],
+["hostname","Displays or sets the system's network hostname."],
+["htdigest","Manages the digest password file used to authenticate users on an Apache web server."],
+["htop","An interactive, color, full-screen process viewer — a more visual alternative to top."],
+["hwclock","Reads from or sets the motherboard's battery-backed hardware clock."]],
+I:[["iconv","Converts a text file from one character encoding to another."],
+["id","Prints the user and group IDs (and names) for the current or specified user."],
+["ifconfig","Displays or configures a network interface's address and status (largely superseded by ip)."],
+["ifdown","Takes a configured network interface offline."],
+["ifup","Brings a configured network interface online."],
+["import","Captures an image of an X window or the whole screen and saves it to a file."],
+["inetd","The 'super-server' daemon that listens on many ports and launches other services on demand."],
+["info","Reads documentation written in the GNU Info hypertext format."],
+["init","The first process started at boot, responsible for bringing the rest of the system up."],
+["insmod","Inserts a single compiled module into the running Linux kernel."],
+["install","Copies files into place while also setting their permissions and ownership, useful in build scripts."],
+["iostat","Reports CPU utilization and I/O statistics for disks and partitions."],
+["ip","Shows and modifies network routes, devices, addresses, and tunnels; the modern replacement for ifconfig."],
+["ipcrm","Manually removes a System V interprocess communication resource, such as a shared memory segment."],
+["ipcs","Reports the status of active System V IPC facilities on the system."],
+["iptables","Configures the kernel's IPv4 packet filtering and NAT rules."],
+["isoinfo","Lists the directory contents of an ISO9660 disc image."],
+["isosize","Prints the total length of an ISO9660 filesystem image."],
+["ispell","An interactive command-line spelling checker."]],
+J:[["jobs","Lists the background and suspended jobs running in the current shell."],
+["join","Joins the lines of two files that share a common field."]],
+K:[["kbd_mode","Displays or sets the keyboard driver's current mode."],
+["kbdrate","Sets how fast a held key repeats and how long before it starts."],
+["kill","Sends a termination or other signal to one or more processes by PID."],
+["killall","Sends a signal to all processes matching a given command name."],
+["killall5","The SystemV-style killall used during shutdown, which spares a protected set of processes."],
+["klogd","Reads kernel log messages and routes them to syslogd, with configurable priority filtering."],
+["kudzu","Detects new or changed hardware by comparing it against a saved hardware database."]],
+L:[["last","Shows a history of recent user logins, pulled from the wtmp log."],
+["lastb","Shows a history of failed login attempts, pulled from the btmp log."],
+["lastlog","Reports the most recent login time for every user, or a specific one."],
+["ld","The GNU linker, which combines object files and archives into an executable."],
+["ldconfig","Rebuilds the cache used to locate shared libraries at runtime."],
+["ldd","Lists the shared libraries that a given program depends on."],
+["less","Displays a file's contents one screen at a time, with the ability to scroll backward."],
+["let","Performs integer arithmetic directly on shell variables."],
+["link","Creates a hard link between two filenames, similar to ln."],
+["ln","Creates hard or symbolic links, allowing one file to be referenced by multiple names."],
+["loadkeys","Loads a keyboard translation table for the console."],
+["locale","Shows the current locale settings, or all locales available on the system."],
+["locate","Finds files by name almost instantly, using a prebuilt filename database."],
+["logger","Adds a custom entry to the system log."],
+["login","Starts a new authenticated session for a user."],
+["logname","Prints the login name of the user who started the current session."],
+["logout","Ends the current login session."],
+["logrotate","Automatically rotates, compresses and eventually removes old log files."],
+["losetup","Associates a regular file with a loop device so it can be mounted like a disk."],
+["lpadmin","Configures printer and print-class queues managed by CUPS."],
+["lpc","Provides limited administrative control over CUPS printer and class queues."],
+["lpq","Shows the current status of a printer's job queue."],
+["lpr","Submits one or more files to be printed."],
+["lprm","Cancels a pending print job."],
+["lpstat","Reports the status of printers, classes, and print jobs."],
+["ls","Lists the files and subdirectories contained in a directory."],
+["lsattr","Shows the special ext2/ext3/ext4 attributes set on files."],
+["lsblk","Lists information about all block (storage) devices, in a tree view."],
+["lsmod","Shows which kernel modules are currently loaded."],
+["lsof","Lists files currently opened by running processes."],
+["lspci","Lists all PCI devices detected on the system."],
+["lsusb","Lists all USB devices and buses detected on the system."]],
+M:[["m4","A general-purpose macro processor used by many GNU build tools."],
+["mail","A command-line utility for composing, sending, and reading email."],
+["make","Automates building software by re-running only the recipes whose dependencies have changed."],
+["man","Displays the manual page documenting a given command, file, or system call."],
+["md5sum","Computes or verifies the MD5 checksum of a file, to check its integrity."],
+["mkdir","Creates one or more new directories."],
+["mke2fs","Creates a new ext2, ext3, or ext4 filesystem on a device or partition."],
+["mkfifo","Creates a named pipe (FIFO) that processes can use to communicate."],
+["mkfs","Builds a filesystem of a chosen type on a storage device."],
+["mkisofs","Creates an ISO9660/Joliet/HFS hybrid image, typically for burning to disc."],
+["mknod","Creates a special file, such as a block or character device node."],
+["mkswap","Prepares a partition or file to be used as swap space."],
+["mktemp","Safely creates a uniquely named temporary file or directory."],
+["modinfo","Displays metadata about a kernel module, such as its author and parameters."],
+["modprobe","Loads or removes a kernel module along with any modules it depends on."],
+["more","Displays a file one screen at a time, scrolling forward only."],
+["mount","Attaches a filesystem to a directory in the system's file tree so it can be accessed."],
+["mtr","Combines ping and traceroute into a single, continuously updating network diagnostic tool."],
+["mv","Moves or renames files and directories."]],
+N:[["named","The BIND DNS server daemon that answers domain name queries."],
+["namei","Follows a pathname, printing the type of each component along the way."],
+["nc","Netcat: reads and writes raw data over arbitrary TCP or UDP connections."],
+["netstat","Displays active network connections, listening ports, and routing tables."],
+["newgrp","Starts a new shell session with a different active group."],
+["newusers","Creates or updates a batch of user accounts from a formatted input file."],
+["nfsstat","Displays statistics about NFS client and server activity."],
+["nice","Runs a program with an adjusted (usually lower) scheduling priority."],
+["nl","Prints a file's contents with line numbers added."],
+["nm","Lists the symbols (functions, variables) defined in an object or executable file."],
+["nohup","Runs a command so it keeps running even after the terminal that started it closes."],
+["notify-send","Sends a desktop pop-up notification from the command line."],
+["nslookup","An interactive tool for querying DNS servers about domain names and records."],
+["nsupdate","Sends dynamic update requests to a DNS server to add or remove records."]],
+O:[["objcopy","Copies an object file to another format, optionally translating between formats."],
+["objdump","Displays detailed information — headers, symbols, disassembly — from object files."],
+["od","Dumps a file's raw contents in octal, hex, decimal, or character form."],
+["op","Lets a system administrator grant limited users access to specific privileged operations."],
+["open","Opens a file using whichever application is registered as its default handler."],
+["openvt","Starts a program running on a freshly allocated virtual terminal."]],
+P:[["passwd","Changes a user's login password."],
+["paste","Merges corresponding lines from multiple files side by side, separated by tabs."],
+["patch","Applies a set of line-based changes (a diff) to an original file."],
+["pathchk","Checks whether a filename is valid and portable across filesystems."],
+["perl","Runs scripts written in the Perl programming language."],
+["pgrep","Lists the process IDs of running processes matching a name or other criteria."],
+["pidof","Finds the process ID of a currently running program by name."],
+["ping","Sends ICMP echo request packets to test whether a host is reachable."],
+["pinky","A lightweight, simplified version of the finger command."],
+["pkill","Sends a signal to processes selected by name or other attributes."],
+["pmap","Reports the memory map of a running process."],
+["popd","Removes the top entry from the directory stack and changes into the next one."],
+["portmap","Maps RPC program numbers to the TCP/UDP ports they're listening on."],
+["poweroff","Shuts down and powers off the machine."],
+["pppd","The Point-to-Point Protocol daemon, used for dial-up and PPP network links."],
+["pr","Paginates and formats a text file for printing, adding headers and page breaks."],
+["printenv","Prints the value of one or all current environment variables."],
+["printf","Formats and prints text according to a specified format string."],
+["ps","Prints a snapshot of currently running processes and their status."],
+["ptx","Produces a permuted (KWIC-style) index of a file's contents."],
+["pushd","Adds a directory to the top of the directory stack and switches into it."],
+["pv","Shows a progress bar for data flowing through a pipe."],
+["pwck","Checks the internal consistency of the password and shadow files."],
+["pwd","Prints the full path of the current working directory."],
+["python","Runs scripts or an interactive session in the Python programming language."]],
+Q:[["quota","Shows a user's or group's current disk usage and quota limits."],
+["quotacheck","Scans a filesystem and rebuilds its table of disk usage per user or group."],
+["quotaon","Turns on enforcement of filesystem disk quotas."],
+["quotaoff","Turns off enforcement of filesystem disk quotas."]],
+R:[["raidstart","Activates a configured software RAID array."],
+["ranlib","Generates or updates the index inside a static archive, speeding up linking."],
+["rcp","Copies files between machines over an insecure remote-copy protocol (largely replaced by scp)."],
+["rdate","Sets the local system clock from the time reported by a remote server."],
+["rdist","Distributes and keeps identical copies of files synchronized across multiple remote hosts."],
+["read","Reads one line of input into shell variables."],
+["readlink","Prints the target that a symbolic link points to."],
+["reboot","Restarts the machine."],
+["reject","Stops a CUPS destination from accepting new print jobs."],
+["rename","Renames multiple files at once based on a pattern."],
+["renice","Changes the scheduling priority of an already-running process."],
+["repquota","Prints a summary report of disk usage and quotas for a filesystem."],
+["reset","Reinitializes the terminal to its default state, useful after garbled output."],
+["resize2fs","Grows or shrinks an existing ext2/ext3/ext4 filesystem."],
+["restore","Restores files from a backup previously created with the dump command."],
+["return","Exits a shell function with a specified return status."],
+["rev","Reverses the order of characters on each line of input."],
+["rlogin","Logs in to a remote host over the network (largely superseded by ssh)."],
+["rm","Deletes files, and with -r, entire directory trees."],
+["rmdir","Removes a directory, but only if it is already empty."],
+["rmmod","Removes a currently loaded module from the kernel."],
+["rndc","Sends administrative commands to a running BIND DNS server."],
+["route","Displays or edits the kernel's IP routing table."],
+["rpcinfo","Queries an RPC server to report which program numbers it responds to."],
+["rpm","The RPM package manager, used on Red-Hat-family Linux distributions."],
+["rsh","Opens a remote shell session on another host (largely superseded by ssh)."],
+["rsync","Efficiently synchronizes files and directories, locally or across a network, copying only what changed."],
+["runlevel","Reports the previous and current SysV runlevel of the system."],
+["rup","Shows the current load and uptime of hosts on the local network."],
+["ruptime","Shows the uptime and login count of machines on the local network."],
+["rusers","Lists users currently logged in across machines on the local network."],
+["rwall","Broadcasts a message to all users logged in across the local network."],
+["rwho","Reports which users are logged in on hosts across the local network."]],
+S:[["sane-find-scanner","Locates SCSI or USB scanner hardware and its associated device file."],
+["scanimage","Captures an image from a scanner or camera and outputs it in PNM format."],
+["scp","Securely copies files between hosts over an SSH-encrypted connection."],
+["screen","A terminal multiplexer that lets you run and detach from multiple sessions in one window."],
+["script","Records everything shown on the terminal during a session to a log file."],
+["sdiff","Shows two files side by side, highlighting where they differ."],
+["sed","A stream editor that applies find-and-replace and other transformations to text as it flows through."],
+["sendmail","A classic mail transfer agent that routes outgoing email to its destination."],
+["sensors","Reads and displays live temperature, voltage and fan readings from hardware sensor chips."],
+["seq","Prints an incrementing sequence of numbers between a start and end value."],
+["set","Displays or sets shell options and positional parameters."],
+["setquota","Sets disk usage quotas for a user or group from the command line."],
+["setsid","Runs a program in a brand-new session, detached from the current one."],
+["setterm","Adjusts terminal display attributes like color and cursor behavior."],
+["sftp","An interactive file-transfer client that runs over an encrypted SSH connection."],
+["sh","A POSIX-compatible command interpreter, often the base that bash extends."],
+["sha1sum","Computes or verifies a file's SHA-1 checksum."],
+["shift","Shifts a shell script's positional parameters down by one, discarding the first."],
+["shopt","Views or sets Bash-specific shell behavior options."],
+["showkey","Displays the raw scancodes generated as keys are pressed, useful for debugging keymaps."],
+["shred","Overwrites a file's contents repeatedly to make its original data harder to recover."],
+["shutdown","Brings the system down safely, optionally after a delay and with a warning message."],
+["skill","Sends a signal to processes selected by name, user, or terminal."],
+["slabtop","Shows real-time statistics about the kernel's internal slab memory cache."],
+["sleep","Pauses execution for a specified number of seconds."],
+["slocate","Finds files by name using a prebuilt database, while respecting file permissions."],
+["sort","Sorts the lines of a text file alphabetically, numerically, or by other keys."],
+["split","Breaks a large file into a series of smaller, fixed-size pieces."],
+["ss","Shows detailed socket statistics, a faster modern alternative to netstat."],
+["ssh","Opens an encrypted remote shell session on another host."],
+["ssh-add","Adds a private key to the running SSH authentication agent."],
+["ssh-agent","Holds decrypted private keys in memory so SSH doesn't repeatedly ask for a passphrase."],
+["ssh-keygen","Generates, manages, and converts SSH authentication key pairs."],
+["sshd","The server daemon that accepts and authenticates incoming SSH connections."],
+["stat","Displays detailed metadata about a file, such as size, permissions, and timestamps."],
+["strace","Traces every system call and signal a running program makes, useful for debugging."],
+["strfile","Builds a random-access index for a file of quotations or fortunes."],
+["strings","Scans a binary file and prints any runs of readable text found inside it."],
+["strip","Removes debugging symbols from an object file or executable, shrinking its size."],
+["stty","Views or changes settings for the current terminal line, like echo and baud rate."],
+["su","Switches to another user account, prompting for that user's password."],
+["sudo","Runs a single command with another user's (usually root's) privileges."],
+["sum","Computes a simple checksum and block count for a file."],
+["swapoff","Disables a device or file that had been used as swap space."],
+["swapon","Enables a device or file to be used as swap space."],
+["symlink","Creates a symbolic link pointing to another file."],
+["sync","Flushes any data cached in memory out to persistent disk storage."],
+["sysctl","Views or changes kernel parameters while the system is running."]],
+T:[["tac","Prints a file with its lines in reverse order — the opposite of cat."],
+["tail","Prints the last lines of a file, and can follow it live as it grows."],
+["talk","Opens a live, two-way text chat session with another logged-in user."],
+["tar","Bundles multiple files and directories into a single archive, optionally compressed."],
+["taskset","Pins a process to run only on specific CPU cores."],
+["tcpdump","Captures and displays network packets matching a given filter expression."],
+["tee","Copies standard input to both the screen and one or more files at once."],
+["telnet","Opens an unencrypted interactive connection to a remote host or port."],
+["test","Evaluates a conditional expression, such as a file check or string comparison."],
+["tftp","A minimal client for the Trivial File Transfer Protocol."],
+["time","Runs a command and reports how long it took and what resources it used."],
+["timeout","Runs a command but kills it if it hasn't finished within a set time limit."],
+["times","Prints the accumulated CPU time used by the shell and its child processes."],
+["top","Shows a live, continuously updating view of running processes and resource usage."],
+["touch","Updates a file's access and modification timestamps, creating it if it doesn't exist."],
+["tr","Translates, squeezes, or deletes specific characters from the input stream."],
+["traceroute","Maps the network path packets take to reach a host, hop by hop."],
+["trap","Runs a specified command whenever the shell receives a given signal."],
+["troff","The core typesetting engine behind the groff document-formatting system."],
+["tsort","Performs a topological sort on a set of dependency pairs."],
+["tty","Prints the filename of the terminal connected to standard input."],
+["tune2fs","Views or adjusts tunable parameters on an ext2/ext3/ext4 filesystem."],
+["type","Reports whether a name is a builtin, alias, function, or external command."]],
+U:[["ulimit","Views or sets limits on the resources a shell and its processes may use."],
+["umask","Sets the default permission mask applied to newly created files."],
+["umount","Detaches a mounted filesystem from the directory tree."],
+["unalias","Removes a previously defined command alias."],
+["uname","Prints information about the system, such as kernel name and version."],
+["uncompress","Restores files that were compressed with the older compress utility."],
+["unexpand","Converts runs of spaces back into tab characters."],
+["uniq","Reports or removes adjacent duplicate lines from sorted input."],
+["units","Converts a quantity from one unit of measurement to another."],
+["unrar","Extracts files from a RAR archive."],
+["unzip","Extracts files from a ZIP archive."],
+["uptime","Reports how long the system has been running and its current load average."],
+["useradd","Creates a new user account with default settings."],
+["userdel","Removes a user account and, optionally, its home directory."],
+["usermod","Changes settings on an existing user account."],
+["users","Lists the users currently logged in to the machine."],
+["uuidgen","Generates a new random or time-based universally unique identifier."]],
+V:[["vi","A classic modal text editor found on virtually every Unix-like system."],
+["vim","Vi Improved — a widely used, more feature-rich successor to vi."],
+["vmstat","Reports statistics on processes, memory, paging, and CPU activity over time."]],
+W:[["w","Shows who is logged in and what command each user is currently running."],
+["wait","Pauses a script until a specified background job finishes, then returns its exit status."],
+["wall","Broadcasts a message to every terminal of every logged-in user."],
+["watch","Runs a command repeatedly at a fixed interval, refreshing its output on screen."],
+["wc","Counts the lines, words, and bytes in a file."],
+["wget","Downloads files from the web non-interactively, with support for resuming and recursion."],
+["whatis","Prints the one-line summary description from a command's man page."],
+["whereis","Locates a command's binary, source code, and man page files."],
+["which","Prints the full path of the executable that would run for a given command."],
+["who","Lists who is currently logged in to the system."],
+["whoami","Prints the username associated with the current effective user."],
+["whois","Looks up registration details for a domain name in a WHOIS database."],
+["write","Sends a message directly to another logged-in user's terminal."]],
+X:[["xargs","Builds and runs commands using arguments piped in from standard input."],
+["xdg-open","Opens a file or URL with whichever application the desktop has set as default."],
+["xinetd","An extended, more configurable replacement for the classic inetd super-server daemon."],
+["xz","Compresses or decompresses files using the high-ratio .xz/.lzma format."]],
+Y:[["yacc","'Yet Another Compiler Compiler' — generates a parser from a grammar description."],
+["yes","Repeatedly prints a string (or 'y' by default) until stopped, often piped to auto-confirm prompts."],
+["ypbind","Connects a client machine to an NIS (Network Information Service) server."],
+["ypcat","Prints the contents of an NIS map."],
+["yppasswd","Changes a user's NIS network login password."]],
+Z:[["zcat","Decompresses a gzip file and prints its contents without saving the unpacked copy."],
+["zcmp","Compares two gzip-compressed files without unpacking them first."],
+["zdiff","Shows line-by-line differences between gzip-compressed files."],
+["zforce","Forces a .gz extension onto files that are already gzip-compressed."],
+["zgrep","Runs grep on the contents of gzip-compressed files."],
+["zip","Packages and compresses files into a .zip archive."],
+["zless","Pages through a compressed file's contents one screen at a time."],
+["zmore","Pages through a compressed file's contents one page at a time, scrolling forward only."]]
+};
+
+const board = document.getElementById('board');
+const letterNav = document.getElementById('letterNav');
+const searchInput = document.getElementById('search');
+const clearBtn = document.getElementById('clearBtn');
+const resultsLine = document.getElementById('resultsLine');
+const noResults = document.getElementById('noResults');
+const searchModeBtns = document.querySelectorAll('#searchMode button');
+
+let mode = 'both';
+let total = 0;
+
+function esc(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// build DOM
+let boardHtml = '';
+let navHtml = '';
+for(const letter of Object.keys(DATA)){
+  const items = DATA[letter];
+  total += items.length;
+  navHtml += `<a href="#L${letter}" class="letter-link">${letter}</a>`;
+  boardHtml += `<div class="letter-block" id="L${letter}" data-letter="${letter}">
+    <div class="letter-head"><span class="L">${letter}</span><span class="count">${items.length} commands</span></div>`;
+  for(const [cmd, desc] of items){
+    boardHtml += `<div class="entry" data-cmd="${esc(cmd.toLowerCase())}" data-desc="${esc(desc.toLowerCase())}">
+      <div class="line1"><span class="dollar">$</span><span class="cmd">${esc(cmd)}</span></div>
+      <div class="desc">${esc(desc)}</div>
+    </div>`;
+  }
+  boardHtml += `</div>`;
+}
+board.innerHTML = boardHtml;
+letterNav.innerHTML = navHtml;
+document.getElementById('statTotal').textContent = total;
+
+function highlight(el, text, query){
+  if(!query){ el.innerHTML = esc(text); return; }
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if(idx === -1){ el.innerHTML = esc(text); return; }
+  const before = esc(text.slice(0, idx));
+  const match = esc(text.slice(idx, idx + query.length));
+  const after = esc(text.slice(idx + query.length));
+  el.innerHTML = `${before}<mark>${match}</mark>${after}`;
+}
+
+function runSearch(){
+  const q = searchInput.value.trim().toLowerCase();
+  clearBtn.classList.toggle('show', q.length > 0);
+
+  let shown = 0;
+  const blocks = board.querySelectorAll('.letter-block');
+
+  blocks.forEach(block => {
+    let blockShown = 0;
+    const entries = block.querySelectorAll('.entry');
+    entries.forEach(entry => {
+      const cmd = entry.dataset.cmd;
+      const desc = entry.dataset.desc;
+      let match;
+      if(!q){ match = true; }
+      else if(mode === 'name'){ match = cmd.includes(q); }
+      else if(mode === 'desc'){ match = desc.includes(q); }
+      else{ match = cmd.includes(q) || desc.includes(q); }
+
+      entry.classList.toggle('hidden', !match);
+      if(match){
+        blockShown++; shown++;
+        const cmdEl = entry.querySelector('.cmd');
+        const descEl = entry.querySelector('.desc');
+        const cmdText = entry.querySelectorAll('span')[1] ? entry.querySelector('.cmd').textContent : '';
+        highlight(cmdEl, cmdEl.textContent, (q && (mode==='name'||mode==='both') && cmd.includes(q)) ? q : '');
+        highlight(descEl, descEl.textContent, (q && (mode==='desc'||mode==='both') && desc.includes(q)) ? q : '');
+      }
+    });
+    block.classList.toggle('empty', blockShown === 0);
+  });
+
+  document.getElementById('statShown').textContent = shown;
+  noResults.classList.toggle('show', shown === 0);
+  board.style.display = shown === 0 ? 'none' : '';
+
+  document.querySelectorAll('.letter-link').forEach(a => {
+    const letter = a.getAttribute('href').slice(2);
+    const block = document.getElementById('L'+letter);
+    a.classList.toggle('disabled', block.classList.contains('empty'));
+  });
+
+  resultsLine.innerHTML = q
+    ? `<b>${shown}</b> match${shown===1?'':'es'} for “${esc(searchInput.value.trim())}” <span class="kbd">esc to clear</span>`
+    : `Showing all <b>${total}</b> commands <span class="kbd">/ to search</span>`;
+}
+
+searchInput.addEventListener('input', runSearch);
+clearBtn.addEventListener('click', () => { searchInput.value=''; runSearch(); searchInput.focus(); });
+
+searchModeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    searchModeBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    runSearch();
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === '/' && document.activeElement !== searchInput){
+    e.preventDefault();
+    searchInput.focus();
+  }
+  if(e.key === 'Escape' && document.activeElement === searchInput){
+    searchInput.value = '';
+    runSearch();
+    searchInput.blur();
+  }
+});
+
+runSearch();
+</script>
+</body>
+</html>
